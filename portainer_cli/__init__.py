@@ -29,16 +29,14 @@ class PortainerCLI(object):
     COMMAND_CONFIGURE = 'configure'
     COMMAND_LOGIN = 'login'
     COMMAND_REQUEST = 'request'
-    COMMAND_UPDATE_STACK = 'update_stack'
+    COMMAND_MANAGE_STACK = 'manage_stack'
     COMMAND_UPDATE_REGISTRY = 'update_registry'
-    COMMAND_CREATE_STACK = 'create_stack'
     COMMANDS = [
         COMMAND_CONFIGURE,
         COMMAND_LOGIN,
         COMMAND_REQUEST,
-        COMMAND_UPDATE_STACK,
-        COMMAND_UPDATE_REGISTRY,
-        COMMAND_CREATE_STACK
+        COMMAND_MANAGE_STACK,
+        COMMAND_UPDATE_REGISTRY
     ]
 
     METHOD_GET = 'GET'
@@ -145,7 +143,28 @@ class PortainerCLI(object):
         logger.info('logged with jwt: {}'.format(jwt))
         self.jwt = jwt
 
-    def create_stack(self, endpoint_id, stack_file, stack_name, *args):
+    def stack_exists(self, endpoint_id, stack_name):
+        stack_url = 'stacks'.format(endpoint_id)
+        result = self.request(
+            stack_url,
+            self.METHOD_GET
+        ).json()
+        if not result:
+            return -1
+        else:
+            for stack in result:
+                if stack['Name'] == stack_name:
+                    return stack['Id']
+            return -1
+
+    def manage_stack(self, endpoint_id, stack_file, stack_name, *args):
+        id = self.stack_exists(endpoint_id,stack_name)
+        if id == -1:
+            self.create_stack(endpoint_id, stack_file, stack_name)
+        else:
+            self.update_stack(id, endpoint_id, stack_file, *args)
+
+    def create_stack(self, endpoint_id, stack_file, stack_name, env_file='', *args):
         stack_url = 'stacks?type=1&method=string&endpointId={}'.format(
             endpoint_id
         )
@@ -153,10 +172,37 @@ class PortainerCLI(object):
         swarm_id = self.request(swarm_url, self.METHOD_GET).json().get('ID')
         self.swarm_id = swarm_id
         stack_file_content = open(stack_file).read()
+        if env_file:
+            env = {}
+            for env_line in open(env_file).readlines():
+                env_line = env_line.strip()
+                if not env_line \
+                        or env_line.startswith('#') \
+                        or '=' not in env_line:
+                    continue
+                k, v = env_line.split('=', 1)
+                k, v = k.strip(), v.strip()
+                env[k] = v
+        else:
+            env_args = filter(
+                lambda x: re.match(env_arg_regex, x),
+                args,
+            )
+            env = dict(map(
+                lambda x: env_arg_to_dict(x),
+                env_args,
+            ))
+        final_env = list(
+            map(
+                lambda x: {'name': x[0], 'value': x[1]},
+                env.items()
+            ),
+        )
         data = {
             'StackFileContent': stack_file_content,
             'SwarmID': self.swarm_id,
-            'Name': stack_name
+            'Name': stack_name,
+            'Env': final_env if len(final_env) > 0 else []
         }
         logger.debug('create stack data: {}'.format(data))
         self.request(
@@ -309,11 +355,9 @@ class PortainerCLI(object):
             plac.call(self.configure, args)
         elif command == self.COMMAND_LOGIN:
             plac.call(self.login, args)
-        elif command == self.COMMAND_UPDATE_STACK:
-            plac.call(self.update_stack, args)
+        elif command == self.COMMAND_MANAGE_STACK:
+            plac.call(self.manage_stack, args)
         elif command == self.COMMAND_UPDATE_REGISTRY:
             plac.call(self.update_registry, args)
         elif command == self.COMMAND_REQUEST:
             plac.call(self.request, args)
-        elif command == self.COMMAND_CREATE_STACK:
-            plac.call(self.create_stack, args)
