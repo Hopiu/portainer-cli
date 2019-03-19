@@ -29,13 +29,13 @@ class PortainerCLI(object):
     COMMAND_CONFIGURE = 'configure'
     COMMAND_LOGIN = 'login'
     COMMAND_REQUEST = 'request'
-    COMMAND_MANAGE_STACK = 'manage_stack'
+    COMMAND_CREATE_OR_UPDATE_STACK = 'create_or_update_stack'
     COMMAND_UPDATE_REGISTRY = 'update_registry'
     COMMANDS = [
         COMMAND_CONFIGURE,
         COMMAND_LOGIN,
         COMMAND_REQUEST,
-        COMMAND_MANAGE_STACK,
+        COMMAND_CREATE_OR_UPDATE_STACK,
         COMMAND_UPDATE_REGISTRY
     ]
 
@@ -157,8 +157,8 @@ class PortainerCLI(object):
                     return stack['Id']
             return -1
 
-    def manage_stack(self, endpoint_id, stack_file, stack_name, *args):
-        id = self.stack_exists(endpoint_id,stack_name)
+    def create_or_update_stack(self, endpoint_id, stack_file, stack_name, *args):
+        id = self.stack_exists(endpoint_id, stack_name)
         if id == -1:
             self.create_stack(endpoint_id, stack_file, stack_name)
         else:
@@ -355,8 +355,8 @@ class PortainerCLI(object):
             plac.call(self.configure, args)
         elif command == self.COMMAND_LOGIN:
             plac.call(self.login, args)
-        elif command == self.COMMAND_MANAGE_STACK:
-            plac.call(self.manage_stack, args)
+        elif command == self.COMMAND_CREATE_OR_UPDATE_STACK:
+            plac.call(self.create_or_update_stack, args)
         elif command == self.COMMAND_UPDATE_REGISTRY:
             plac.call(self.update_registry, args)
         elif command == self.COMMAND_REQUEST:
