@@ -31,12 +31,14 @@ class PortainerCLI(object):
     COMMAND_REQUEST = 'request'
     COMMAND_UPDATE_STACK = 'update_stack'
     COMMAND_UPDATE_REGISTRY = 'update_registry'
+    COMMAND_CREATE_STACK = 'create_stack'
     COMMANDS = [
         COMMAND_CONFIGURE,
         COMMAND_LOGIN,
         COMMAND_REQUEST,
         COMMAND_UPDATE_STACK,
         COMMAND_UPDATE_REGISTRY,
+        COMMAND_CREATE_STACK
     ]
 
     METHOD_GET = 'GET'
@@ -47,6 +49,7 @@ class PortainerCLI(object):
     _base_url = 'http://localhost:9000/'
     _jwt = None
     _proxies = {}
+    _swarm_id = None
 
     @property
     def base_url(self):
@@ -84,6 +87,15 @@ class PortainerCLI(object):
             self._proxies['https'] = ''
         if self._proxies['http'] == '' and self._proxies['https'] == '':
             self._proxies = {}
+
+    @property
+    def swarm_id(self):
+        return self._swarm_id
+
+    @swarm_id.setter
+    def swarm_id(self, value):
+        self._swarm_id = value
+        self.persist()
 
     @property
     def data_path(self):
@@ -132,6 +144,26 @@ class PortainerCLI(object):
         jwt = r.get('jwt')
         logger.info('logged with jwt: {}'.format(jwt))
         self.jwt = jwt
+
+    def create_stack(self, endpoint_id, stack_file, stack_name, *args):
+        stack_url = 'stacks?type=1&method=string&endpointId={}'.format(
+            endpoint_id
+        )
+        swarm_url = 'endpoints/{}/docker/swarm'.format(endpoint_id)
+        swarm_id = self.request(swarm_url, self.METHOD_GET).json().get('ID')
+        self.swarm_id = swarm_id
+        stack_file_content = open(stack_file).read()
+        data = {
+            'StackFileContent': stack_file_content,
+            'SwarmID': self.swarm_id,
+            'Name': stack_name
+        }
+        logger.debug('create stack data: {}'.format(data))
+        self.request(
+            stack_url,
+            self.METHOD_POST,
+            data,
+        )
 
     @plac.annotations(
         env_file=('Environment Variable file', 'option'),
@@ -249,7 +281,7 @@ class PortainerCLI(object):
             prepped.headers['Content-Length'] = len(prepped.body)
         if self.jwt:
             prepped.headers['Authorization'] = 'Bearer {}'.format(self.jwt)
-        response = session.send(prepped, proxies=self.proxies)
+        response = session.send(prepped, proxies=self.proxies, verify=False)
         logger.debug('request response: {}'.format(response.content))
         response.raise_for_status()
         if printc:
@@ -283,3 +315,5 @@ class PortainerCLI(object):
             plac.call(self.update_registry, args)
         elif command == self.COMMAND_REQUEST:
             plac.call(self.request, args)
+        elif command == self.COMMAND_CREATE_STACK:
+            plac.call(self.create_stack, args)
