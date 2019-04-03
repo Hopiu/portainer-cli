@@ -47,18 +47,19 @@ portainer-cli login username password
 portainer-cli login douglas d1234
 ```
 
-### update_stack command
+### create_or_update_stack command
 
-Update stack.
+Either create or update stack based on whether or not it exists already.
 
 ```bash
-portainer-cli update_stack id endpoint_id [stack_file] [-env-file]
+portainer-cli create_or_update_stack endpoint_id [stack_file] stack_name [-env-file]
 ```
+stack_file is mandatory when creating
 
 **E.g:**
 
 ```bash
-portainer-cli update_stack 2 1 docker-compose.yml
+portainer-cli update_stack 1 stack-test docker-compose.yml
 ```
 
 #### Environment variables arguments
