@@ -29,13 +29,19 @@ class PortainerCLI(object):
     COMMAND_CONFIGURE = 'configure'
     COMMAND_LOGIN = 'login'
     COMMAND_REQUEST = 'request'
+    COMMAND_CREATE_STACK = 'create_stack'
+    COMMAND_UPDATE_STACK = 'update_stack'
     COMMAND_CREATE_OR_UPDATE_STACK = 'create_or_update_stack'
+    COMMAND_GET_STACK_ID = 'get_stack_id'
     COMMAND_UPDATE_REGISTRY = 'update_registry'
     COMMANDS = [
         COMMAND_CONFIGURE,
         COMMAND_LOGIN,
         COMMAND_REQUEST,
+        COMMAND_CREATE_STACK,
+        COMMAND_UPDATE_STACK,
         COMMAND_CREATE_OR_UPDATE_STACK,
+        COMMAND_GET_STACK_ID,
         COMMAND_UPDATE_REGISTRY
     ]
 
@@ -143,42 +149,37 @@ class PortainerCLI(object):
         logger.info('logged with jwt: {}'.format(jwt))
         self.jwt = jwt
 
-    def stack_exists(self, endpoint_id, stack_name):
-        stack_url = 'stacks'.format(endpoint_id)
+    # Retrieve the stack if. -1 if the stack does not exist
+    @plac.annotations(
+        endpoint_id=('Endpoint id', 'option', 'e'),
+        stack_name=('Stack name', 'option', 'n')
+    )
+    def get_stack_id(self, endpoint_id, stack_name):
+        stack_url = 'stacks'
         result = self.request(
             stack_url,
             self.METHOD_GET
         ).json()
         if not result:
+            logger.debug('Stack with name={} does not exist').format(
+                stack_name)
             return -1
         else:
             for stack in result:
                 if stack['Name'] == stack_name:
+                    logger.debug(
+                        'Stack with name={} -> id={}').format(stack_name, stack['Id'])
                     return stack['Id']
+            logger.debug('Stack with name={} does not exist').format(
+                stack_name)
             return -1
 
-    def create_or_update_stack(self, endpoint_id, stack_file, stack_name, *args):
-        id = self.stack_exists(endpoint_id, stack_name)
-        if id == -1:
-            self.create_stack(endpoint_id, stack_file, stack_name)
-        else:
-            self.update_stack(id, endpoint_id, stack_file, *args)
-
-    def create_stack(self, endpoint_id, stack_file, stack_name, env_file='', *args):
-        stack_url = 'stacks?type=1&method=string&endpointId={}'.format(
-            endpoint_id
-        )
-        swarm_url = 'endpoints/{}/docker/swarm'.format(endpoint_id)
-        swarm_id = self.request(swarm_url, self.METHOD_GET).json().get('ID')
-        self.swarm_id = swarm_id
-        stack_file_content = open(stack_file).read()
+    def extract_env(self, env_file='', *args):
         if env_file:
             env = {}
             for env_line in open(env_file).readlines():
                 env_line = env_line.strip()
-                if not env_line \
-                        or env_line.startswith('#') \
-                        or '=' not in env_line:
+                if not env_line or env_line.startswith('#') or '=' not in env_line:
                     continue
                 k, v = env_line.split('=', 1)
                 k, v = k.strip(), v.strip()
@@ -188,10 +189,37 @@ class PortainerCLI(object):
                 lambda x: re.match(env_arg_regex, x),
                 args,
             )
-            env = dict(map(
-                lambda x: env_arg_to_dict(x),
-                env_args,
-            ))
+        env = dict(map(
+            lambda x: env_arg_to_dict(x),
+            env_args,
+        ))
+        return env
+
+    def create_or_update_stack(self, *args):
+        stack_id = plac.call(self.get_stack_id, *args)
+        if stack_id == -1:
+            plac.call(self.create_stack, *args)
+        else:
+            plac.call(self.update_stack, '-s', stack_id, *args)
+
+    @plac.annotations(
+        stack_name=('Stack name', 'option', 'n'),
+        endpoint_id=('Endpoint id', 'option', 'e'),
+        env_file=('Environment Variable file', 'option', 'f'),
+        owner_type=('Owner type', 'option', 'ot', ['user', 'team', 'public']),
+        owner=('Owner (user name or team name)')
+    )
+    def create_stack(self, endpoint_id, stack_file, stack_name, env_file='', owner_type='public', owner='', *args):
+        logger.info('Creating stack name={}').format(stack_name)
+        stack_url = 'stacks?type=1&method=string&endpointId={}'.format(
+            endpoint_id
+        )
+        swarm_url = 'endpoints/{}/docker/swarm'.format(endpoint_id)
+        swarm_id = self.request(swarm_url, self.METHOD_GET).json().get('ID')
+        self.swarm_id = swarm_id
+        stack_file_content = open(stack_file).read()
+
+        env = self.extract_env(env_file, *args)
         final_env = list(
             map(
                 lambda x: {'name': x[0], 'value': x[1]},
@@ -212,14 +240,18 @@ class PortainerCLI(object):
         )
 
     @plac.annotations(
+        stack_id=('Stack id', 'option', 's'),
+        endpoint_id=('Endpoint id', 'option', 'e'),
+        stack_file=('Stack file', 'option', 'f'),
         env_file=('Environment Variable file', 'option'),
         prune=('Prune services', 'flag', 'p'),
         clear_env=('Clear all env vars', 'flag', 'c'),
     )
-    def update_stack(self, id, endpoint_id, stack_file='', env_file='',
+    def update_stack(self, stack_id, endpoint_id, stack_file='', env_file='',
                      prune=False, clear_env=False, *args):
+        logger.info('Updating stack id={}').format(stack_id)
         stack_url = 'stacks/{}?endpointId={}'.format(
-            id,
+            stack_id,
             endpoint_id,
         )
         current = self.request(stack_url).json()
@@ -229,30 +261,13 @@ class PortainerCLI(object):
         else:
             stack_file_content = self.request(
                 'stacks/{}/file?endpointId={}'.format(
-                    id,
+                    stack_id,
                     endpoint_id,
                 )
             ).json().get('StackFileContent')
-        if env_file:
-            env = {}
-            for env_line in open(env_file).readlines():
-                env_line = env_line.strip()
-                if not env_line \
-                        or env_line.startswith('#') \
-                        or '=' not in env_line:
-                    continue
-                k, v = env_line.split('=', 1)
-                k, v = k.strip(), v.strip()
-                env[k] = v
-        else:
-            env_args = filter(
-                lambda x: re.match(env_arg_regex, x),
-                args,
-            )
-            env = dict(map(
-                lambda x: env_arg_to_dict(x),
-                env_args,
-            ))
+
+        env = self.extract_env(env_file, *args)
+
         if not clear_env:
             current_env = dict(
                 map(
@@ -269,7 +284,7 @@ class PortainerCLI(object):
             ),
         )
         data = {
-            'Id': id,
+            'Id': stack_id,
             'StackFileContent': stack_file_content,
             'Prune': prune,
             'Env': final_env if len(final_env) > 0 else current.get('Env'),
@@ -355,8 +370,14 @@ class PortainerCLI(object):
             plac.call(self.configure, args)
         elif command == self.COMMAND_LOGIN:
             plac.call(self.login, args)
+        elif command == self.COMMAND_CREATE_STACK:
+            plac.call(self.create_stack, args)
+        elif command == self.COMMAND_UPDATE_STACK:
+            plac.call(self.update_stack, args)
         elif command == self.COMMAND_CREATE_OR_UPDATE_STACK:
             plac.call(self.create_or_update_stack, args)
+        elif command == self.COMMAND_GET_STACK_ID:
+            plac.call(self.get_stack_id, args)
         elif command == self.COMMAND_UPDATE_REGISTRY:
             plac.call(self.update_registry, args)
         elif command == self.COMMAND_REQUEST:
