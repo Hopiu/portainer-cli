@@ -333,7 +333,6 @@ class PortainerCLI(object):
         users=('Allowed usernames (comma separated - restricted ownership_type only)', 'option', 'u'),
         teams=('Allowed teams (comma separated - restricted ownership_type only)', 'option', 't'),
         clear=('Clear acl (restricted ownership_type only)', 'flag', 'c')
-        )
     )
     def update_stack_acl(self, stack_id, stack_name, endpoint_id, ownership_type, users, teams, clear=False):
         stack = None
