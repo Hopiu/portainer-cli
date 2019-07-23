@@ -213,7 +213,7 @@ class PortainerCLI(object):
 
     def get_stacks(self):
         stack_url = 'stacks'
-        return = self.request(stack_url, self.METHOD_GET).json()
+        return self.request(stack_url, self.METHOD_GET).json()
 
     def get_stack_by_id(self, stack_id, endpoint_id):
         stack_url = 'stacks/{}?endpointId={}'.format(
