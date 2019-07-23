@@ -362,7 +362,7 @@ class PortainerCLI(object):
             self.create_or_update_resource_control(stack, True, [], [])
         elif ownership_type == 'restricted':
             users = map(lambda u: u['Id'], self.get_users_by_name(users.split(',')))
-            teams = map(lambda t: t['Id'], self.get_teams_by_name(users.split(',')))
+            teams = map(lambda t: t['Id'], self.get_teams_by_name(teams.split(',')))
 
             if (not clear) and resouce_control:
                 logger.debug('Merging existing users / teams')
