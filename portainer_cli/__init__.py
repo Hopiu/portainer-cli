@@ -314,17 +314,15 @@ class PortainerCLI(object):
     def create_or_update_resource_control(self, stack, public, users, teams):
         # TODO HANDLE RESOURCE_CONTROL CREATION
         resouce_control = stack['ResourceControl']
+        resource_path = 'resource_controls/{}'.format(resouce_control['Id'])
         data = {
                 'Public': public,
                 'Users': users,
                 'Teams': teams
             }
         logger.debug('Updating stack acl: {}'.format(data))
-        self.request(
-                'resource_controls/{}'.format(resouce_control['Id']),
-                self.METHOD_PUT,
-                data
-            )
+        logger.debug('Resource path: {}'.format(resource_path))
+        #self.request(resource_path, self.METHOD_PUT, data)
 
 
     @plac.annotations(
@@ -354,10 +352,9 @@ class PortainerCLI(object):
         if ownership_type == 'admin':
             if resouce_control:
                 logger.debug('Deleting resource control with id {}'.format(resouce_control['Id']))
-                self.request(
-                    'resource_controls/{}'.format(resouce_control['Id']),
-                    self.METHOD_DELETE
-                )
+                resouce_path = 'resource_controls/{}'.format(resouce_control['Id'])
+                logger.debug('resource_path : {}'.format(resouce_path))
+                #self.request(resouce_path,self.METHOD_DELETE)
             else:
                 logger.debug('Nothing to do')
         elif ownership_type == 'public':
