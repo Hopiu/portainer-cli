@@ -399,6 +399,10 @@ class PortainerCLI(object):
     def update_stack(self, stack_id, endpoint_id, stack_file='', env_file='',
                      prune=False, clear_env=False, *args):
         logger.info('Updating stack id={}'.format(stack_id))
+        stack_url = 'stacks/{}?endpointId={}'.format(
+            stack_id,
+            endpoint_id,
+        )
         current = self.get_stack_by_id(stack_id, endpoint_id)
         stack_file_content = ''
         if stack_file:
