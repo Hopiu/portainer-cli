@@ -160,9 +160,9 @@ portainer-cli update_stack_acl -n stack-test -e 1 -o restricted -u user1,user2 -
 | `-n` or `-stack-name` | Stack name |
 | `-e` or `-endpoint-id` | Endpoint id (required) |
 | `-o` or `-ownership-type` | Ownership type (`admin`|`restricted`,`public`) (required) |
-| `-u` or `users` | Comma separated list of user names (when `restricted`) |
-| `-t` or `team` | Comma separated list of team names (when `restricted`) |
-| `-c` or `clear` | Clear users and teams before updateing them (when `restricted`) |
+| `-u` or `-users` | Comma separated list of user names (when `restricted`) |
+| `-t` or `-teams` | Comma separated list of team names (when `restricted`) |
+| `-c` or `-clear` | Clear users and teams before updateing them (when `restricted`) |
 
 ### get_stack_id command
 
