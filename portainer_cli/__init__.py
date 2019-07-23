@@ -505,6 +505,7 @@ class PortainerCLI(object):
         self.local = local
         self.load()
         self.proxies = {}
+        logger.debug('main args:{}', args)
         if command == self.COMMAND_CONFIGURE:
             plac.call(self.configure, args)
         elif command == self.COMMAND_LOGIN:
