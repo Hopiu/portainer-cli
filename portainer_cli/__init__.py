@@ -31,6 +31,7 @@ class PortainerCLI(object):
     COMMAND_REQUEST = 'request'
     COMMAND_CREATE_STACK = 'create_stack'
     COMMAND_UPDATE_STACK = 'update_stack'
+    COMMAND_UPDATE_STACK_ACL = 'update_stack_acl'
     COMMAND_CREATE_OR_UPDATE_STACK = 'create_or_update_stack'
     COMMAND_GET_STACK_ID = 'get_stack_id'
     COMMAND_UPDATE_REGISTRY = 'update_registry'
@@ -40,6 +41,7 @@ class PortainerCLI(object):
         COMMAND_REQUEST,
         COMMAND_CREATE_STACK,
         COMMAND_UPDATE_STACK,
+        COMMAND_UPDATE_STACK_ACL,
         COMMAND_CREATE_OR_UPDATE_STACK,
         COMMAND_GET_STACK_ID,
         COMMAND_UPDATE_REGISTRY
@@ -48,6 +50,7 @@ class PortainerCLI(object):
     METHOD_GET = 'GET'
     METHOD_POST = 'POST'
     METHOD_PUT = 'PUT'
+    METHOD_DELETE = 'DELETE'
 
     local = False
     _base_url = 'http://localhost:9000/'
@@ -149,30 +152,99 @@ class PortainerCLI(object):
         logger.info('logged with jwt: {}'.format(jwt))
         self.jwt = jwt
 
-    # Retrieve the stack if. -1 if the stack does not exist
-    @plac.annotations(
-        endpoint_id=('Endpoint id', 'option', 'e'),
-        stack_name=('Stack name', 'option', 'n')
-    )
-    def get_stack_id(self, endpoint_id, stack_name):
+    def get_users(self):
+        users_url = 'users'
+        return self.request(users_url, self.METHOD_GET).json()
+    
+    # retrieve users by their names
+    def get_users_by_name(self, names):
+        all_users = self.get_users()
+        if not all_users:
+            logger.debug('No users found')
+            return []
+        users=all_users.
+        for name in names:
+            # searching for user
+            user = next(u for u in all_users if u['Username'] == name)
+            if not user:
+                logger.warn('User with name \'{}\' not found'.format(name))
+            else:
+                logger.debug('User with name \'{}\' found'.format(name))
+                users.append(user)
+        return users
+    
+    # retrieve users by their names
+    def get_users_by_name(self, names):
+        all_users = self.get_users()
+        all_users_by_name = dict(map(
+            lambda u: (u['Username'], u),
+            all_users,
+        ))
+        users = []
+        for name in names:
+            user = all_users_by_name.get(name)
+            if not user:
+                logger.warn('User with name \'{}\' not found'.format(name))
+            else:
+                logger.debug('User with name \'{}\' found'.format(name))
+                users.append(user)
+        return users
+    
+    def get_teams(self):
+        teams_url = 'teams'
+        return self.request(teams_url, self.METHOD_GET).json()
+
+    # retrieve teams by their names
+    def get_teams_by_name(self, names):
+        all_teams = self.get_teams()
+        all_teams_by_name = dict(map(
+            lambda u: (u['Name'], u),
+            all_teams,
+        ))
+        teams = []
+        for name in names:
+            team = all_teams_by_name.get(name)
+            if not team:
+                logger.warn('Team with name \'{}\' not found'.format(name))
+            else:
+                logger.debug('Team with name \'{}\' found'.format(name))
+                teams.append(team)
+        return teams
+
+    def get_stacks(self):
         stack_url = 'stacks'
         result = self.request(
             stack_url,
             self.METHOD_GET
         ).json()
+
+    def get_stack_by_id(self, stack_id, endpoint_id):
+        stack_url = 'stacks/{}?endpointId={}'.format(
+            stack_id,
+            endpoint_id,
+        )
+        return self.request(stack_url).json()
+    
+    def get_stack_by_name(self, stack_name):
+        result = self.get_stacks()
         if not result:
-            logger.debug('Stack with name={} does not exist'.format(
-                stack_name))
+            return None
+        for stack in result:
+            if stack['Name'] == stack_name:
+                return stack
+        return None
+
+    # Retrieve the stack if. -1 if the stack does not exist
+    @plac.annotations(
+        stack_name=('Stack name', 'option', 'n')
+    )
+    def get_stack_id(self, stack_name):
+        stack = self.get_stack_by_name(stack_name)
+        if not stack:
+            logger.debug('Stack with name={} does not exist'.format(stack_name))
             return -1
-        else:
-            for stack in result:
-                if stack['Name'] == stack_name:
-                    logger.debug(
-                        'Stack with name={} -> id={}'.format(stack_name, stack['Id']))
-                    return stack['Id']
-            logger.debug('Stack with name={} does not exist'.format(
-                stack_name))
-            return -1
+        logger.debug('Stack with name={} -> id={}'.format(stack_name, stack['Id']))
+        return stack['Id']
 
     def extract_env(self, env_file='', *args):
         if env_file:
@@ -238,6 +310,68 @@ class PortainerCLI(object):
             self.METHOD_POST,
             data,
         )
+    
+    def create_or_update_resource_control(self, stack, public, users, teams):
+        # TODO HANDLE RESOURCE_CONTROL CREATION
+        resouce_control = stack['ResourceControl']
+        data = {
+                'Public': public,
+                'Users': users,
+                'Teams': teams
+            }
+        logger.debug('Updating stack acl: {}'.format(data))
+        self.request(
+                'resource_controls/{}'.format(resouce_control['Id']),
+                self.METHOD_PUT,
+                data
+            )
+
+
+    @plac.annotations(
+        stack_id=('Stack id', 'option', 's'),
+        stack_name=('Stack name', 'option', 'n'),
+        endpoint_id=('Endpoint id', 'option', 'e'),
+        ownership_type=('Ownership type', 'option', 'o', ['admin', 'restricted', 'public']),
+        users=('Allowed usernames (comma separated - restricted ownership_type only)', 'option', 'u'),
+        teams=('Allowed teams (comma separated - restricted ownership_type only)', 'option', 't'),
+        clear=('Clear acl (restricted ownership_type only)', 'flag', 'c')
+        )
+    )
+    def update_stack_acl(self, stack_id, stack_name, endpoint_id, ownership_type, users, teams, clear=False):
+        stack = None
+        if stack_id and endpoint_id:
+            stack = self.get_stack_by_id(stack_id, endpoint_id)
+        elif stack_name:
+            stack = self.get_stack_by_name(stack_name)
+        else:
+            logger.error('Please provide either stack_name or (stack_id + endpoint_id)')
+            sys.exit(1)
+
+        logger.info('Updating acl of stack name={} - type={}'.format(stack['Name'], ownership_type))
+
+        resouce_control = stack['ResourceControl']
+
+        if ownership_type == 'admin':
+            if resouce_control:
+                logger.debug('Deleting resource control with id {}'.format(resouce_control['Id']))
+                self.request(
+                    'resource_controls/{}'.format(resouce_control['Id']),
+                    self.METHOD_DELETE
+                )
+            else:
+                logger.debug('Nothing to do')
+        elif ownership_type == 'public':
+            self.create_or_update_resource_control(stack, true, [], [])
+        elif ownership_type == 'restricted':
+            users = map(lambda u: u['Id'], self.get_users_by_name(users.split(',')))
+            teams = map(lambda t: t['Id'], self.get_teams_by_name(users.split(',')))
+
+            if (not clear) and resouce_control:
+                logger.debug('Merging existing users / teams')
+                users = list(set().union(users, map(lamba u: u['UserId'], resouce_control['UserAccesses'])))
+                teams = list(set().union(teams, map(lamba t: t['TeamId'], resouce_control['TeamAccesses'])))
+
+            self.create_or_update_resource_control(stack, true, users, teams)
 
     @plac.annotations(
         stack_id=('Stack id', 'option', 's'),
@@ -250,11 +384,7 @@ class PortainerCLI(object):
     def update_stack(self, stack_id, endpoint_id, stack_file='', env_file='',
                      prune=False, clear_env=False, *args):
         logger.info('Updating stack id={}'.format(stack_id))
-        stack_url = 'stacks/{}?endpointId={}'.format(
-            stack_id,
-            endpoint_id,
-        )
-        current = self.request(stack_url).json()
+        current = self.get_stack_by_id(stack_id, endpoint_id)
         stack_file_content = ''
         if stack_file:
             stack_file_content = open(stack_file).read()
@@ -374,6 +504,8 @@ class PortainerCLI(object):
             plac.call(self.create_stack, args)
         elif command == self.COMMAND_UPDATE_STACK:
             plac.call(self.update_stack, args)
+        elif command == self.COMMAND_UPDATE_STACK_ACL:
+            plac.call(self.update_stack_acl, args)
         elif command == self.COMMAND_CREATE_OR_UPDATE_STACK:
             plac.call(self.create_or_update_stack, args)
         elif command == self.COMMAND_GET_STACK_ID:
