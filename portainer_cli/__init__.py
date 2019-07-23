@@ -229,7 +229,7 @@ class PortainerCLI(object):
         result = self.get_stacks()
         if result:
             for stack in result:
-                logger.debug('get_stack_by_name - Name={} - EndpointId={}'.format(stack['Name'], stack['EndpointId'])
+                logger.debug('get_stack_by_name - Name={} - EndpointId={}'.format(stack['Name'], stack['EndpointId']))
                 if stack['Name'] == stack_name and stack['EndpointId'] == endpoint_id:
                     return stack
         if mandatory:
