@@ -282,9 +282,9 @@ class PortainerCLI(object):
         logger.debug('create_or_update_stack')
         stack_id = self.get_stack_id(stack_name, endpoint_id)
         if stack_id == -1:
-            self.create_stack(stack_name, endpoint_id, stack_file, env_file, args)
+            self.create_stack(stack_name, endpoint_id, stack_file, env_file, *args)
         else:
-           self.update_stack(stack_id, endpoint_id, stack_file, env_file, prune, clear_env, args)
+           self.update_stack(stack_id, endpoint_id, stack_file, env_file, prune, clear_env, *args)
 
     @plac.annotations(
         stack_name=('Stack name', 'option', 'n'),
