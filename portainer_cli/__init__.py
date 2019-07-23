@@ -222,8 +222,7 @@ class PortainerCLI(object):
         )
         stack = self.request(stack_url).json()
         if not stack:
-            logger.error('Stack with id={} does not exist'.format(stack_id))
-            sys.exit(1)
+            raise Exception('Stack with id={} does not exist'.format(stack_id))
         return stack
     
     def get_stack_by_name(self, stack_name, endpoint_id, mandatory=False):
@@ -233,8 +232,7 @@ class PortainerCLI(object):
                 if stack['Name'] == stack_name and stack['EndpointId'] == endpoint_id:
                     return stack
         if mandatory:
-            logger.error('Stack with name={} and endpoint_id={} does not exist'.format(stack_name, endpoint_id))
-            sys.exit(1)
+            raise Exception('Stack with name={} and endpoint_id={} does not exist'.format(stack_name, endpoint_id))
         else:
             return None
 
@@ -346,8 +344,7 @@ class PortainerCLI(object):
         elif stack_name:
             stack = self.get_stack_by_name(stack_name, endpoint_id, True)
         else:
-            logger.error('Please provide either stack_name or stack_id')
-            sys.exit(1)
+            raise Exception('Please provide either stack_name or stack_id')
 
         logger.info('Updating acl of stack name={} - type={}'.format(stack['Name'], ownership_type))
 
