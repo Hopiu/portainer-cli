@@ -315,17 +315,27 @@ class PortainerCLI(object):
         )
     
     def create_or_update_resource_control(self, stack, public, users, teams):
-        # TODO HANDLE RESOURCE_CONTROL CREATION
-        resouce_control = stack['ResourceControl']
-        resource_path = 'resource_controls/{}'.format(resouce_control['Id'])
-        data = {
-                'Public': public,
-                'Users': users,
-                'Teams': teams
-            }
-        logger.debug('Updating stack acl: {}'.format(data))
-        logger.debug('Resource path: {}'.format(resource_path))
-        self.request(resource_path, self.METHOD_PUT, data)
+        resource_control = stack['ResourceControl']
+        if resource_control:
+            resource_path = 'resource_controls/{}'.format(resource_control['Id'])
+            data = {
+                    'Public': public,
+                    'Users': users,
+                    'Teams': teams
+                }
+            logger.debug('Updating stack acl {} for stack {}: {}'.format(resource_control['Id'], stack['Id'], data))
+            self.request(resource_path, self.METHOD_PUT, data)
+        else:
+            resource_path = 'resource_controls'
+            data = {
+                    'Type': 'stack',
+                    'ResourceID': stack['Name'],
+                    'Public': public,
+                    'Users': users,
+                    'Teams': teams
+                }
+            logger.debug('Creating stack acl for stack {}: {}'.format(stack['Id'], data))
+            self.request(resource_path, self.METHOD_POST, data)
 
 
     @plac.annotations(
@@ -348,14 +358,14 @@ class PortainerCLI(object):
 
         logger.info('Updating acl of stack name={} - type={}'.format(stack['Name'], ownership_type))
 
-        resouce_control = stack['ResourceControl']
+        resource_control = stack['ResourceControl']
 
         if ownership_type == 'admin':
-            if resouce_control:
-                logger.debug('Deleting resource control with id {}'.format(resouce_control['Id']))
-                resouce_path = 'resource_controls/{}'.format(resouce_control['Id'])
-                logger.debug('resource_path : {}'.format(resouce_path))
-                self.request(resouce_path, self.METHOD_DELETE)
+            if resource_control:
+                logger.debug('Deleting resource control with id {}'.format(resource_control['Id']))
+                resource_path = 'resource_controls/{}'.format(resource_control['Id'])
+                logger.debug('resource_path : {}'.format(resource_path))
+                self.request(resource_path, self.METHOD_DELETE)
             else:
                 logger.debug('Nothing to do')
         elif ownership_type == 'public':
@@ -364,10 +374,10 @@ class PortainerCLI(object):
             users = map(lambda u: u['Id'], self.get_users_by_name(users.split(',')))
             teams = map(lambda t: t['Id'], self.get_teams_by_name(teams.split(',')))
 
-            if (not clear) and resouce_control:
+            if (not clear) and resource_control:
                 logger.debug('Merging existing users / teams')
-                users = list(set().union(users, map(lambda u: u['UserId'], resouce_control['UserAccesses'])))
-                teams = list(set().union(teams, map(lambda t: t['TeamId'], resouce_control['TeamAccesses'])))
+                users = list(set().union(users, map(lambda u: u['UserId'], resource_control['UserAccesses'])))
+                teams = list(set().union(teams, map(lambda t: t['TeamId'], resource_control['TeamAccesses'])))
 
             self.create_or_update_resource_control(stack, False, users, teams)
 
