@@ -325,7 +325,7 @@ class PortainerCLI(object):
             }
         logger.debug('Updating stack acl: {}'.format(data))
         logger.debug('Resource path: {}'.format(resource_path))
-        #self.request(resource_path, self.METHOD_PUT, data)
+        self.request(resource_path, self.METHOD_PUT, data)
 
 
     @plac.annotations(
@@ -355,7 +355,7 @@ class PortainerCLI(object):
                 logger.debug('Deleting resource control with id {}'.format(resouce_control['Id']))
                 resouce_path = 'resource_controls/{}'.format(resouce_control['Id'])
                 logger.debug('resource_path : {}'.format(resouce_path))
-                #self.request(resouce_path,self.METHOD_DELETE)
+                self.request(resouce_path, self.METHOD_DELETE)
             else:
                 logger.debug('Nothing to do')
         elif ownership_type == 'public':
