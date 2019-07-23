@@ -274,7 +274,7 @@ class PortainerCLI(object):
             stack_name=('Stack name', 'option', 'n', str),
             endpoint_id=('Endpoint id', 'option', 'e', int),
             stack_file=('Stack file', 'option', 'f'),
-            env_file=('Environment Variable file', 'option'),
+            env_file=('Environment Variable file', 'option', 'ef'),
             prune=('Prune services', 'flag', 'p'),
             clear_env=('Clear all env vars', 'flag', 'c'),
         )
@@ -289,7 +289,8 @@ class PortainerCLI(object):
     @plac.annotations(
         stack_name=('Stack name', 'option', 'n'),
         endpoint_id=('Endpoint id', 'option', 'e', int),
-        env_file=('Environment Variable file', 'option', 'f')
+        stack_file=('Environment Variable file', 'option', 'f')
+        env_file=('Environment Variable file', 'option', 'ef')
     )
     def create_stack(self, stack_name, endpoint_id, stack_file, env_file='', *args):
         logger.info('Creating stack name={}'.format(stack_name))
@@ -392,7 +393,7 @@ class PortainerCLI(object):
         stack_id=('Stack id', 'option', 's', int),
         endpoint_id=('Endpoint id', 'option', 'e', int),
         stack_file=('Stack file', 'option', 'f'),
-        env_file=('Environment Variable file', 'option'),
+        env_file=('Environment Variable file', 'option', 'ef'),
         prune=('Prune services', 'flag', 'p'),
         clear_env=('Clear all env vars', 'flag', 'c'),
     )
