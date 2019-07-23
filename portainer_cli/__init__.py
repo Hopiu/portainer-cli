@@ -229,7 +229,6 @@ class PortainerCLI(object):
         result = self.get_stacks()
         if result:
             for stack in result:
-                logger.debug('get_stack_by_name - Name={} - EndpointId={}'.format(stack['Name'], stack['EndpointId']))
                 if stack['Name'] == stack_name and stack['EndpointId'] == endpoint_id:
                     return stack
         if mandatory:
@@ -360,7 +359,7 @@ class PortainerCLI(object):
             else:
                 logger.debug('Nothing to do')
         elif ownership_type == 'public':
-            self.create_or_update_resource_control(stack, true, [], [])
+            self.create_or_update_resource_control(stack, True, [], [])
         elif ownership_type == 'restricted':
             users = map(lambda u: u['Id'], self.get_users_by_name(users.split(',')))
             teams = map(lambda t: t['Id'], self.get_teams_by_name(users.split(',')))
@@ -370,7 +369,7 @@ class PortainerCLI(object):
                 users = list(set().union(users, map(lambda u: u['UserId'], resouce_control['UserAccesses'])))
                 teams = list(set().union(teams, map(lambda t: t['TeamId'], resouce_control['TeamAccesses'])))
 
-            self.create_or_update_resource_control(stack, true, users, teams)
+            self.create_or_update_resource_control(stack, False, users, teams)
 
     @plac.annotations(
         stack_id=('Stack id', 'option', 's', int),
