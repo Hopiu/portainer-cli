@@ -271,9 +271,9 @@ class PortainerCLI(object):
         return env
 
     def create_or_update_stack(self, *args):
-        stack_id = plac.call(self.get_stack_id)
+        stack_id = plac.call(self.get_stack_id, args)
         if stack_id == -1:
-            plac.call(self.create_stack)
+            plac.call(self.create_stack, args)
         else:
             plac.call(self.update_stack, args.extend(['-s', stack_id]))
 
