@@ -225,21 +225,22 @@ class PortainerCLI(object):
         )
         return self.request(stack_url).json()
     
-    def get_stack_by_name(self, stack_name):
+    def get_stack_by_name(self, stack_name, endpoint_id):
         result = self.get_stacks()
         if not result:
             return None
         for stack in result:
-            if stack['Name'] == stack_name:
+            if stack['Name'] == stack_name and stack['EndpointId'] == endpoint_id:
                 return stack
         return None
 
     # Retrieve the stack if. -1 if the stack does not exist
     @plac.annotations(
-        stack_name=('Stack name', 'option', 'n')
+        stack_name=('Stack name', 'option', 'n'),
+        endpoint_id=('Endpoint id', 'option', 'e')
     )
-    def get_stack_id(self, stack_name):
-        stack = self.get_stack_by_name(stack_name)
+    def get_stack_id(self, stack_name, enpoint_id):
+        stack = self.get_stack_by_name(stack_name, enpoint_id)
         if not stack:
             logger.debug('Stack with name={} does not exist'.format(stack_name))
             return -1
@@ -336,12 +337,12 @@ class PortainerCLI(object):
     )
     def update_stack_acl(self, stack_id, stack_name, endpoint_id, ownership_type, users, teams, clear=False):
         stack = None
-        if stack_id and endpoint_id:
+        if stack_id:
             stack = self.get_stack_by_id(stack_id, endpoint_id)
         elif stack_name:
-            stack = self.get_stack_by_name(stack_name)
+            stack = self.get_stack_by_name(stack_name, endpoint_id)
         else:
-            logger.error('Please provide either stack_name or (stack_id + endpoint_id)')
+            logger.error('Please provide either stack_name or stack_id')
             sys.exit(1)
 
         logger.info('Updating acl of stack name={} - type={}'.format(stack['Name'], ownership_type))
