@@ -227,9 +227,7 @@ class PortainerCLI(object):
     
     def get_stack_by_name(self, stack_name, endpoint_id, mandatory=False):
         result = self.get_stacks()
-        logger.debug('get_stack_by_name - result = {}'.format(result))
         if result:
-            logger.debug('get_stack_by_name - has result')
             for stack in result:
                 logger.debug('get_stack_by_name - Name={} - EndpointId={}'.format(stack['Name'], stack['EndpointId'])
                 if stack['Name'] == stack_name and stack['EndpointId'] == endpoint_id:
