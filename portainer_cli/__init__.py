@@ -239,8 +239,8 @@ class PortainerCLI(object):
         stack_name=('Stack name', 'option', 'n'),
         endpoint_id=('Endpoint id', 'option', 'e')
     )
-    def get_stack_id(self, stack_name, enpoint_id):
-        stack = self.get_stack_by_name(stack_name, enpoint_id)
+    def get_stack_id(self, stack_name, endpoint_id):
+        stack = self.get_stack_by_name(stack_name, endpoint_id)
         if not stack:
             logger.debug('Stack with name={} does not exist'.format(stack_name))
             return -1
