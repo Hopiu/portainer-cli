@@ -270,22 +270,28 @@ class PortainerCLI(object):
         ))
         return env
 
-    def create_or_update_stack(self, *args):
-        logger.debug('create_or_update_stack : {}'.format(args))
-        stack_id = plac.call(self.get_stack_id, args)
+    @plac.annotations(
+            stack_name=('Stack name', 'option', 'n', str),
+            endpoint_id=('Endpoint id', 'option', 'e', int),
+            stack_file=('Stack file', 'option', 'f'),
+            env_file=('Environment Variable file', 'option'),
+            prune=('Prune services', 'flag', 'p'),
+            clear_env=('Clear all env vars', 'flag', 'c'),
+        )
+    def create_or_update_stack(self, stack_name, endpoint_id, stack_file='', env_file='', prune=False, clear_env=False, *args):
+        logger.debug('create_or_update_stack')
+        stack_id = self.get_stack_id(stack_name, endpoint_id)
         if stack_id == -1:
-            plac.call(self.create_stack, args)
+            self.create_stack(stack_name, endpoint_id, stack_file, env_file, args)
         else:
-            plac.call(self.update_stack, args.extend(['-s', stack_id]))
+           self.update_stack(stack_id, endpoint_id, stack_file, env_file, prune, clear_env, args)
 
     @plac.annotations(
         stack_name=('Stack name', 'option', 'n'),
         endpoint_id=('Endpoint id', 'option', 'e', int),
-        env_file=('Environment Variable file', 'option', 'f'),
-        owner_type=('Owner type', 'option', 'ot', ['user', 'team', 'public']),
-        owner=('Owner (user name or team name)')
+        env_file=('Environment Variable file', 'option', 'f')
     )
-    def create_stack(self, endpoint_id, stack_file, stack_name, env_file='', owner_type='public', owner='', *args):
+    def create_stack(self, stack_name, endpoint_id, stack_file, env_file='', *args):
         logger.info('Creating stack name={}'.format(stack_name))
         stack_url = 'stacks?type=1&method=string&endpointId={}'.format(
             endpoint_id
@@ -340,8 +346,8 @@ class PortainerCLI(object):
 
 
     @plac.annotations(
-        stack_id=('Stack id', 'option', 's'),
-        stack_name=('Stack name', 'option', 'n'),
+        stack_id=('Stack id', 'option', 's', int),
+        stack_name=('Stack name', 'option', 'n', str),
         endpoint_id=('Endpoint id', 'option', 'e', int),
         ownership_type=('Ownership type', 'option', 'o', str, ['admin', 'restricted', 'public']),
         users=('Allowed usernames (comma separated - restricted ownership_type only)', 'option', 'u'),
@@ -505,7 +511,6 @@ class PortainerCLI(object):
         self.local = local
         self.load()
         self.proxies = {}
-        logger.debug('main args:{}'.format(args))
         if command == self.COMMAND_CONFIGURE:
             plac.call(self.configure, args)
         elif command == self.COMMAND_LOGIN:
