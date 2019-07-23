@@ -330,7 +330,7 @@ class PortainerCLI(object):
         stack_id=('Stack id', 'option', 's'),
         stack_name=('Stack name', 'option', 'n'),
         endpoint_id=('Endpoint id', 'option', 'e'),
-        ownership_type=('Ownership type', 'option', 'o', ['admin', 'restricted', 'public']),
+        ownership_type=('Ownership type', 'option', 'o', str, ['admin', 'restricted', 'public']),
         users=('Allowed usernames (comma separated - restricted ownership_type only)', 'option', 'u'),
         teams=('Allowed teams (comma separated - restricted ownership_type only)', 'option', 't'),
         clear=('Clear acl (restricted ownership_type only)', 'flag', 'c')
