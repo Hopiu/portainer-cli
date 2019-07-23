@@ -316,7 +316,7 @@ class PortainerCLI(object):
     
     def create_or_update_resource_control(self, stack, public, users, teams):
         resource_control = stack['ResourceControl']
-        if resource_control:
+        if resource_control and resource_control['Id'] != 0:
             resource_path = 'resource_controls/{}'.format(resource_control['Id'])
             data = {
                     'Public': public,
@@ -361,7 +361,7 @@ class PortainerCLI(object):
         resource_control = stack['ResourceControl']
 
         if ownership_type == 'admin':
-            if resource_control:
+            if resource_control and resource_control['Id'] != 0:
                 logger.debug('Deleting resource control with id {}'.format(resource_control['Id']))
                 resource_path = 'resource_controls/{}'.format(resource_control['Id'])
                 logger.debug('resource_path : {}'.format(resource_path))
