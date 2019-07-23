@@ -213,26 +213,30 @@ class PortainerCLI(object):
 
     def get_stacks(self):
         stack_url = 'stacks'
-        result = self.request(
-            stack_url,
-            self.METHOD_GET
-        ).json()
+        return = self.request(stack_url, self.METHOD_GET).json()
 
     def get_stack_by_id(self, stack_id, endpoint_id):
         stack_url = 'stacks/{}?endpointId={}'.format(
             stack_id,
             endpoint_id,
         )
-        return self.request(stack_url).json()
+        stack = self.request(stack_url).json()
+        if not stack:
+            logger.error('Stack with id={} does not exist'.format(stack_id))
+            sys.exit(1)
+        return stack
     
-    def get_stack_by_name(self, stack_name, endpoint_id):
+    def get_stack_by_name(self, stack_name, endpoint_id, mandatory=False):
         result = self.get_stacks()
-        if not result:
+        if result:
+            for stack in result:
+                if stack['Name'] == stack_name and stack['EndpointId'] == endpoint_id:
+                    return stack
+        if mandatory:
+            logger.error('Stack with name={} and endpoint_id={} does not exist'.format(stack_name, endpoint_id))
+            sys.exit(1)
+        else:
             return None
-        for stack in result:
-            if stack['Name'] == stack_name and stack['EndpointId'] == endpoint_id:
-                return stack
-        return None
 
     # Retrieve the stack if. -1 if the stack does not exist
     @plac.annotations(
@@ -340,7 +344,7 @@ class PortainerCLI(object):
         if stack_id:
             stack = self.get_stack_by_id(stack_id, endpoint_id)
         elif stack_name:
-            stack = self.get_stack_by_name(stack_name, endpoint_id)
+            stack = self.get_stack_by_name(stack_name, endpoint_id, True)
         else:
             logger.error('Please provide either stack_name or stack_id')
             sys.exit(1)
