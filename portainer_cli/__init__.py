@@ -240,7 +240,7 @@ class PortainerCLI(object):
     # Retrieve the stack if. -1 if the stack does not exist
     @plac.annotations(
         stack_name=('Stack name', 'option', 'n'),
-        endpoint_id=('Endpoint id', 'option', 'e')
+        endpoint_id=('Endpoint id', 'option', 'e', int)
     )
     def get_stack_id(self, stack_name, endpoint_id):
         stack = self.get_stack_by_name(stack_name, endpoint_id)
@@ -280,7 +280,7 @@ class PortainerCLI(object):
 
     @plac.annotations(
         stack_name=('Stack name', 'option', 'n'),
-        endpoint_id=('Endpoint id', 'option', 'e'),
+        endpoint_id=('Endpoint id', 'option', 'e', int),
         env_file=('Environment Variable file', 'option', 'f'),
         owner_type=('Owner type', 'option', 'ot', ['user', 'team', 'public']),
         owner=('Owner (user name or team name)')
@@ -332,7 +332,7 @@ class PortainerCLI(object):
     @plac.annotations(
         stack_id=('Stack id', 'option', 's'),
         stack_name=('Stack name', 'option', 'n'),
-        endpoint_id=('Endpoint id', 'option', 'e'),
+        endpoint_id=('Endpoint id', 'option', 'e', int),
         ownership_type=('Ownership type', 'option', 'o', str, ['admin', 'restricted', 'public']),
         users=('Allowed usernames (comma separated - restricted ownership_type only)', 'option', 'u'),
         teams=('Allowed teams (comma separated - restricted ownership_type only)', 'option', 't'),
@@ -373,8 +373,8 @@ class PortainerCLI(object):
             self.create_or_update_resource_control(stack, true, users, teams)
 
     @plac.annotations(
-        stack_id=('Stack id', 'option', 's'),
-        endpoint_id=('Endpoint id', 'option', 'e'),
+        stack_id=('Stack id', 'option', 's', int),
+        endpoint_id=('Endpoint id', 'option', 'e', int),
         stack_file=('Stack file', 'option', 'f'),
         env_file=('Environment Variable file', 'option'),
         prune=('Prune services', 'flag', 'p'),
