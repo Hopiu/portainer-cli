@@ -52,13 +52,13 @@ portainer-cli login douglas d1234
 Create a stack.
 
 ```bash
-portainer-cli create_stack -n stack_name -e endpoint_id -f stack_file
+portainer-cli create_stack -n stack_name -e endpoint_id -sf stack_file
 ```
 
 **E.g:**
 
 ```bash
-portainer-cli create_stack -n stack_name -e 1 stack-test -f docker-compose.yml
+portainer-cli create_stack -n stack_name -e 1 stack-test -sf docker-compose.yml
 ```
 
 #### Flags
@@ -67,27 +67,27 @@ portainer-cli create_stack -n stack_name -e 1 stack-test -f docker-compose.yml
 |--|--|
 | `-n` or `-stack-name` | Stack name |
 | `-e` or `-endpoint-id` | Endpoint id (required) |
-| `-f` or `-stack-file` |Stack file |
-| `-w` or `-env-file` | Pass env file path, usually `.env` |
+| `-sf` or `-stack-file` |Stack file |
+| `-ef` or `-env-file` | Pass env file path, usually `.env` |
 
 ### update_stack command
 
 Update a stack.
 
 ```bash
-portainer-cli update_stack -s stack_id -e endpoint_id -f stack_file
+portainer-cli update_stack -s stack_id -e endpoint_id -sf stack_file
 ```
 
 **E.g:**
 
 ```bash
-portainer-cli update_stack -s 18 -e 1 -f docker-compose.yml
+portainer-cli update_stack -s 18 -e 1 -sf docker-compose.yml
 ```
 
 #### Environment variables arguments
 
 ```bash
-portainer-cli update_stack id -s stack_id -e endpoint_id -f stack_file --env.var=value
+portainer-cli update_stack id -s stack_id -e endpoint_id -sf stack_file --env.var=value
 ```
 
 Where `var` is the environment variable name and `value` is the environment variable value.
@@ -98,8 +98,8 @@ Where `var` is the environment variable name and `value` is the environment vari
 |--|--|
 | `-s` or `-stack-id` | Stack id |
 | `-e` or `-endpoint-id` | Endpoint id (required) |
-| `-f` or `-stack-file` |Stack file |
-| `-w` or `-env-file` | Pass env file path, usually `.env` |
+| `-sf` or `-stack-file` |Stack file |
+| `-ef` or `-env-file` | Pass env file path, usually `.env` |
 | `-p` or `--prune` | Prune services |
 | `-c` or `--clear-env` | Clear all environment variables |
 
@@ -108,19 +108,19 @@ Where `var` is the environment variable name and `value` is the environment vari
 Create or update a stack based on it's name.
 
 ```bash
-portainer-cli create_or_update_stack -n stack_name -e endpoint_id -f stack_file
+portainer-cli create_or_update_stack -n stack_name -e endpoint_id -sf stack_file
 ```
 
 **E.g:**
 
 ```bash
-portainer-cli update_stack -s 18 -e 1 -f docker-compose.yml
+portainer-cli update_stack -s 18 -e 1 -sf docker-compose.yml
 ```
 
 #### Environment variables arguments
 
 ```bash
-portainer-cli create_or_update_stack -n stack_name -e endpoint_id -f stack_file --env.var=value
+portainer-cli create_or_update_stack -n stack_name -e endpoint_id -sf stack_file --env.var=value
 ```
 
 Where `var` is the environment variable name and `value` is the environment variable value.
@@ -131,8 +131,8 @@ Where `var` is the environment variable name and `value` is the environment vari
 |--|--|
 | `-n` or `-stack-name` | Stack name |
 | `-e` or `-endpoint-id` | Endpoint id (required) |
-| `-f` or `-stack-file` |Stack file |
-| `-w` or `-env-file` | Pass env file path, usually `.env` |
+| `-sf` or `-stack-file` |Stack file |
+| `-ef` or `-env-file` | Pass env file path, usually `.env` |
 | `-p` or `--prune` | Prune services |
 | `-c` or `--clear-env` | Clear all environment variables |
 
