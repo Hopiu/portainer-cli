@@ -161,17 +161,17 @@ class PortainerCLI(object):
             self.METHOD_GET
         ).json()
         if not result:
-            logger.debug('Stack with name={} does not exist').format(
-                stack_name)
+            logger.debug('Stack with name={} does not exist'.format(
+                stack_name))
             return -1
         else:
             for stack in result:
                 if stack['Name'] == stack_name:
                     logger.debug(
-                        'Stack with name={} -> id={}').format(stack_name, stack['Id'])
+                        'Stack with name={} -> id={}'.format(stack_name, stack['Id']))
                     return stack['Id']
-            logger.debug('Stack with name={} does not exist').format(
-                stack_name)
+            logger.debug('Stack with name={} does not exist'.format(
+                stack_name))
             return -1
 
     def extract_env(self, env_file='', *args):
@@ -210,7 +210,7 @@ class PortainerCLI(object):
         owner=('Owner (user name or team name)')
     )
     def create_stack(self, endpoint_id, stack_file, stack_name, env_file='', owner_type='public', owner='', *args):
-        logger.info('Creating stack name={}').format(stack_name)
+        logger.info('Creating stack name={}'.format(stack_name))
         stack_url = 'stacks?type=1&method=string&endpointId={}'.format(
             endpoint_id
         )
@@ -249,7 +249,7 @@ class PortainerCLI(object):
     )
     def update_stack(self, stack_id, endpoint_id, stack_file='', env_file='',
                      prune=False, clear_env=False, *args):
-        logger.info('Updating stack id={}').format(stack_id)
+        logger.info('Updating stack id={}'.format(stack_id))
         stack_url = 'stacks/{}?endpointId={}'.format(
             stack_id,
             endpoint_id,
