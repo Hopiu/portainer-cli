@@ -364,8 +364,8 @@ class PortainerCLI(object):
 
             if (not clear) and resouce_control:
                 logger.debug('Merging existing users / teams')
-                users = list(set().union(users, map(lamba u: u['UserId'], resouce_control['UserAccesses'])))
-                teams = list(set().union(teams, map(lamba t: t['TeamId'], resouce_control['TeamAccesses'])))
+                users = list(set().union(users, map(lambda u: u['UserId'], resouce_control['UserAccesses'])))
+                teams = list(set().union(teams, map(lambda t: t['TeamId'], resouce_control['TeamAccesses'])))
 
             self.create_or_update_resource_control(stack, true, users, teams)
 
