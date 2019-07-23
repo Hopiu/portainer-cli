@@ -162,7 +162,7 @@ class PortainerCLI(object):
         if not all_users:
             logger.debug('No users found')
             return []
-        users=all_users.
+        users=[]
         for name in names:
             # searching for user
             user = next(u for u in all_users if u['Username'] == name)
